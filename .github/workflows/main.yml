@@ -13,7 +13,7 @@ jobs:
       uses: sebastianpopp/ftp-action@v1.0.0
       with: 
         host: ${{ secrets.SERVER }}
-        user: ${{ secrets.USERNAME }}
+        user: ${{ secrets.USER }}
         password: ${{ secrets.PASSWORD }}
         localDir: "api"
         remoteDir: "www/api"
