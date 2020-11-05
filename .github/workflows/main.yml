@@ -2,7 +2,7 @@ name: Wildgoat-API CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   publish:
