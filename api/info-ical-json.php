@@ -26,7 +26,6 @@ if (isset($_GET['url']) and !empty($_GET['url'])) {
     if (isset($_GET['weeks']) and !empty($_GET['weeks']))
         $weeks = intval($_GET['weeks']);
     $raw = file_get_contents('https://ical-to-json.herokuapp.com/convert.json?url=https://dptinfo.iutmetz.univ-lorraine.fr/lna/agendas/ical.php?ical=' . $url);
-    var_dump($raw);
     if ($raw != false) {
         $rawevents = json_decode($raw)->vcalendar[0]->vevent;
         for ($i = 0; $i < $weeks; $i++) {
