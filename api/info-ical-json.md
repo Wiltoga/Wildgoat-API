@@ -2,9 +2,9 @@
 
 Usage
 
-`http://wildgoat.fr/api/info-ical-json.php&`
+`http://wildgoat.fr/api/ical-json.php?`
 
-Parameters :
+`GET` Parameters :
 
- - `url=` : **Required**, indicate which Ical to target. Not a complete url, just the part that is specific from group.
+ - `url=` : **Required**, encoded url. Indicates which Ical to target.
  - `weeks=` : Default 2. Number of weeks to get.

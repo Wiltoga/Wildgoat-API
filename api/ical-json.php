@@ -25,7 +25,7 @@ if (isset($_GET['url']) and !empty($_GET['url'])) {
     $events = array();
     if (isset($_GET['weeks']) and !empty($_GET['weeks']))
         $weeks = intval($_GET['weeks']);
-    $raw = file_get_contents('https://ical-to-json.herokuapp.com/convert.json?url=https://dptinfo.iutmetz.univ-lorraine.fr/lna/agendas/ical.php?ical=' . $url);
+    $raw = file_get_contents("https://ical-to-json.herokuapp.com/convert.json?url=$url");
     if ($raw != false) {
         $rawevents = json_decode($raw)->vcalendar[0]->vevent;
         for ($i = 0; $i < $weeks; $i++) {
@@ -35,10 +35,10 @@ if (isset($_GET['url']) and !empty($_GET['url'])) {
         foreach ($rawevents as $event) {
             $rawtime = substr($event->dtstart[0], 0, strlen('YYYYmmdd'));
             for ($i = 0; $i < $weeks; $i++) {
-                $j = $i - 1 ;
+                $j = $i - 1;
                 $currMon = date('Ymd', strtotime("monday $j week"));
-                if ($currMon <= $rawtime &&  $rawtime <= date('Ymd', strtotime("saturday $i week"))){
-                    if(strcmp($lastDate, $rawtime) != 0){
+                if ($currMon <= $rawtime &&  $rawtime <= date('Ymd', strtotime("saturday $i week"))) {
+                    if (strcmp($lastDate, $rawtime) != 0) {
                         $lastDate = $rawtime;
                         $edt->weeks[$i]->days[] = new Day;
                     }
