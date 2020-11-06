@@ -21,7 +21,7 @@ function ical_to_json($url, $weeks, $offset)
 {
     $edt = new EDT;
     $events = array();
-    $raw = file_get_contents("https://ical-to-json.herokuapp.com/convert.json?url=$url");
+    $raw = file_get_contents("https://ical-to-json.herokuapp.com/convert.json?url=" . urlencode($url));
     if ($raw != false) {
         $rawevents = json_decode($raw)->vcalendar[0]->vevent;
         for ($i = 0; $i < $weeks; $i++) {
