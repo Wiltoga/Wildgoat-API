@@ -228,10 +228,10 @@ class table
         $last_column = 0;
         $last_row = 0;
         foreach ($this->cells as [$cell, $column, $row]) {
-            if ($last_column < $column)
-                $last_column = $column;
-            if ($last_row < $row)
-                $last_row = $row;
+            if ($last_column < $column + $cell->col_span - 1)
+                $last_column = $column + $cell->col_span - 1;
+            if ($last_row < $row + $cell->row_span - 1)
+                $last_row = $row + $cell->row_span - 1;
             $nb_lines = count($cell->content_lines);
             $max_width = 0;
             $text_width[$column * 4096 + $row] = [];
@@ -242,13 +242,43 @@ class table
                 if ($max_width < $width)
                     $max_width = $width;
             }
-            $col_width[$column] = $max_width + 2 * $this->cell_padding;
-            if ($nb_lines > 0) {
-                $text_height[$column * 4096 + $row] = ceil($this->font_size + ($nb_lines - 1) * $this->font_size * 1.3);
-                $row_height[$row] = ceil($this->font_size + ($nb_lines - 1) * $this->font_size * 1.3 + 2 * $this->cell_padding);
+            if (isset($col_width[$column])) {
+                if ($col_width[$column] < $max_width + 2 * $this->cell_padding)
+                    $col_width[$column] = $max_width + 2 * $this->cell_padding;
+            } else
+                $col_width[$column] = $max_width + 2 * $this->cell_padding;
+            if ($cell->col_span > 1)
+                if (!isset($col_width[$column + $cell->col_span - 1])) {
+                    $col_width[$column + $cell->col_span - 1] = max(2 * $this->cell_padding, $this->min_cell_size[0]);
+                    $text_height[($column + $cell->col_span - 1) * 4096 + $row] = 0;
+                }
+            if ($cell->row_span > 1)
+                if (!isset($row_height[$row + $cell->row_span - 1])) {
+                    $row_height[$row + $cell->row_span - 1] = max(2 * $this->cell_padding, $this->min_cell_size[1]);
+                    $text_height[$column * 4096 + $row + $cell->row_span - 1] = 0;
+                }
+            if (isset($row_height[$row])) {
+                if ($nb_lines > 0) {
+                    $t_height = ceil($this->font_size + ($nb_lines - 1) * $this->font_size * 1.3);
+                    if (!isset($text_height[$column * 4096 + $row]))
+                        $text_height[$column * 4096 + $row] = 0;
+                    if ($text_height[$column * 4096 + $row] < $t_height)
+                        $text_height[$column * 4096 + $row] = $t_height;
+                    $r_height = ceil($this->font_size + ($nb_lines - 1) * $this->font_size * 1.3 + 2 * $this->cell_padding);
+                    if ($row_height[$row] < $r_height)
+                        $row_height[$row] = $r_height;
+                } else {
+                    $row_height[$row] = 2 * $this->cell_padding;
+                    $text_height[$column * 4096 + $row] = 0;
+                }
             } else {
-                $row_height[$row] = 2 * $this->cell_padding;
-                $text_height[$column * 4096 + $row] = 0;
+                if ($nb_lines > 0) {
+                    $text_height[$column * 4096 + $row] = ceil($this->font_size + ($nb_lines - 1) * $this->font_size * 1.3);
+                    $row_height[$row] = ceil($this->font_size + ($nb_lines - 1) * $this->font_size * 1.3 + 2 * $this->cell_padding);
+                } else {
+                    $row_height[$row] = 2 * $this->cell_padding;
+                    $text_height[$column * 4096 + $row] = 0;
+                }
             }
             if ($row_height[$row] < $this->min_cell_size[1])
                 $row_height[$row] = $this->min_cell_size[1];
@@ -264,87 +294,91 @@ class table
     }
     public function generate_image()
     {
-        [$columns_width, $rows_height, $texts_width, $texts_height] = $this->get_sizes();
-        $total_width = 0;
-        $total_height = 0;
-        foreach ($columns_width as $cell_width)
-            $total_width += $cell_width;
-        foreach ($rows_height as $cell_height)
-            $total_height += $cell_height;
+        try {
+            [$columns_width, $rows_height, $texts_width, $texts_height] = $this->get_sizes();
+            $total_width = 0;
+            $total_height = 0;
+            foreach ($columns_width as $cell_width)
+                $total_width += $cell_width;
+            foreach ($rows_height as $cell_height)
+                $total_height += $cell_height;
 
-        $columns_position = [];
-        $curr_width = 0;
-        for ($i = 0; $i < count($columns_width); $i++) {
-            $columns_position[$i] = $curr_width;
-            $curr_width += $columns_width[$i];
-        }
-
-        $rows_position = [];
-        $curr_height = 0;
-        for ($i = 0; $i < count($rows_height); $i++) {
-            $rows_position[$i] = $curr_height;
-            $curr_height += $rows_height[$i];
-        }
-
-        $image = imagecreatetruecolor($total_width, $total_height);
-        $background = imagecolorallocate(
-            $image,
-            $this->background_color[0],
-            $this->background_color[1],
-            $this->background_color[2]
-        );
-        imagefilledrectangle($image, 0, 0, intval($total_width), intval($total_height), $background);
-        $line = imagecolorallocate(
-            $image,
-            $this->lines_color[0],
-            $this->lines_color[1],
-            $this->lines_color[2]
-        );
-        if ($this->display_columns) {
-            imageline($image, $total_width, 0, $total_width, intval($total_height), $line);
-            for ($i = 0; $i < count($columns_position); $i++) {
-                imageline($image, intval($columns_position[$i]), 0, intval($columns_position[$i]), intval($total_height), $line);
+            $columns_position = [];
+            $curr_width = 0;
+            for ($i = 0; $i < count($columns_width); $i++) {
+                $columns_position[$i] = $curr_width;
+                $curr_width += $columns_width[$i];
             }
-        }
-        if ($this->display_rows) {
-            imageline($image, 0, $total_height, $total_width, $total_height, $line);
-            for ($i = 0; $i < count($rows_position); $i++)
-                imageline($image, 0, intval($rows_position[$i]), intval($total_width), intval($rows_position[$i]), $line);
-        }
-        foreach ($this->cells as [$cell, $column, $row]) {
-            $cell_background = imagecolorallocate(
+
+            $rows_position = [];
+            $curr_height = 0;
+            for ($i = 0; $i < count($rows_height); $i++) {
+                $rows_position[$i] = $curr_height;
+                $curr_height += $rows_height[$i];
+            }
+
+            $image = imagecreatetruecolor($total_width, $total_height);
+            $background = imagecolorallocate(
                 $image,
-                $cell->background_color[0],
-                $cell->background_color[1],
-                $cell->background_color[2]
+                $this->background_color[0],
+                $this->background_color[1],
+                $this->background_color[2]
             );
-            $cell_width = 0;
-            for ($i = $column; $i < $column + $cell->col_span; $i++)
-                $cell_width += $columns_width[$i];
-            $cell_height = 0;
-            for ($i = $row; $i < $row + $cell->row_span; $i++)
-                $cell_height += $rows_height[$i];
-            $cell_x = $columns_position[$column];
-            $cell_y = $rows_position[$row];
-            imagefilledrectangle($image, $cell_x, $cell_y, $cell_x + $cell_width, $cell_y + $cell_height, $cell_background);
-            imageline($image, $cell_x, $cell_y, $cell_x + $cell_width, $cell_y, $line);
-            imageline($image, $cell_x + $cell_width, $cell_y, $cell_x + $cell_width, $cell_y + $cell_height, $line);
-            imageline($image, $cell_x + $cell_width, $cell_y + $cell_height, $cell_x, $cell_y + $cell_height, $line);
-            imageline($image, $cell_x, $cell_y + $cell_height, $cell_x, $cell_y, $line);
-            $text_pos_y = intval(round($cell_y + $cell_height / 2 - $texts_height[$column * 4096 + $row] / 2));
-            for ($i = 0; $i < count($cell->content_lines); $i++) {
-                $text_pos_x = intval(round($cell_x + $cell_width / 2 - $texts_width[$column * 4096 + $row][$i] / 2));
-                $color = imagecolorallocate(
-                    $image,
-                    $cell->color[0],
-                    $cell->color[1],
-                    $cell->color[2]
-                );
-                imagettftext($image, $this->font_size, 0, $text_pos_x, $text_pos_y + $this->font_size, $color, $this->font_family_file, $cell->content_lines[$i]);
-                $text_pos_y += $this->font_size * 1.3;
+            imagefilledrectangle($image, 0, 0, intval($total_width), intval($total_height), $background);
+            $line = imagecolorallocate(
+                $image,
+                $this->lines_color[0],
+                $this->lines_color[1],
+                $this->lines_color[2]
+            );
+            if ($this->display_columns) {
+                imageline($image, $total_width, 0, $total_width, intval($total_height), $line);
+                for ($i = 0; $i < count($columns_position); $i++) {
+                    imageline($image, intval($columns_position[$i]), 0, intval($columns_position[$i]), intval($total_height), $line);
+                }
             }
-        }
+            if ($this->display_rows) {
+                imageline($image, 0, $total_height, $total_width, $total_height, $line);
+                for ($i = 0; $i < count($rows_position); $i++)
+                    imageline($image, 0, intval($rows_position[$i]), intval($total_width), intval($rows_position[$i]), $line);
+            }
+            foreach ($this->cells as [$cell, $column, $row]) {
+                $cell_background = imagecolorallocate(
+                    $image,
+                    $cell->background_color[0],
+                    $cell->background_color[1],
+                    $cell->background_color[2]
+                );
+                $cell_width = 0;
+                for ($i = $column; $i < $column + $cell->col_span; $i++)
+                    $cell_width += $columns_width[$i];
+                $cell_height = 0;
+                for ($i = $row; $i < $row + $cell->row_span; $i++)
+                    $cell_height += $rows_height[$i];
+                $cell_x = $columns_position[$column];
+                $cell_y = $rows_position[$row];
+                imagefilledrectangle($image, $cell_x, $cell_y, $cell_x + $cell_width, $cell_y + $cell_height, $cell_background);
+                imageline($image, $cell_x, $cell_y, $cell_x + $cell_width, $cell_y, $line);
+                imageline($image, $cell_x + $cell_width, $cell_y, $cell_x + $cell_width, $cell_y + $cell_height, $line);
+                imageline($image, $cell_x + $cell_width, $cell_y + $cell_height, $cell_x, $cell_y + $cell_height, $line);
+                imageline($image, $cell_x, $cell_y + $cell_height, $cell_x, $cell_y, $line);
+                $text_pos_y = intval(round($cell_y + $cell_height / 2 - $texts_height[$column * 4096 + $row] / 2));
+                for ($i = 0; $i < count($cell->content_lines); $i++) {
+                    $text_pos_x = intval(round($cell_x + $cell_width / 2 - $texts_width[$column * 4096 + $row][$i] / 2));
+                    $color = imagecolorallocate(
+                        $image,
+                        $cell->color[0],
+                        $cell->color[1],
+                        $cell->color[2]
+                    );
+                    imagettftext($image, $this->font_size, 0, $text_pos_x, $text_pos_y + $this->font_size, $color, $this->font_family_file, $cell->content_lines[$i]);
+                    $text_pos_y += $this->font_size * 1.3;
+                }
+            }
 
-        return $image;
+            return $image;
+        } catch (Exception $e) {
+            echo "$e<br />";
+        }
     }
 }

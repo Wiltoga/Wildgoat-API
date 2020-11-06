@@ -1,4 +1,4 @@
-# info-ical-json
+# ical-json
 
 Usage
 
