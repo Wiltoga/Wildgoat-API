@@ -4,6 +4,8 @@ Usage
 
 `http://wildgoat.fr/api/ical-json.php?`
 
+Converts an ical into a JSON starting from the current week.
+
 `GET` Parameters :
 
  - `url=` : **Required**, encoded url. Indicates which Ical to target.
