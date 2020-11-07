@@ -108,7 +108,7 @@ if (isset($_GET['url']) and !empty($_GET['url'])) {
                 $table->set_cell(new cell(1, 4, ["$i:00"], [160, 0, 60], [255, 255, 255]), 0, 1 + ($i - $min_hour) * 4);
         $path = "generated/" . uniqid(rand(), true) . '.png';
         imagepng($table->generate_image(), $path);
-        header("Location: $path");
+        header("Location: $path", true, 307);
         die();
     } else
         echo $json->succuess;

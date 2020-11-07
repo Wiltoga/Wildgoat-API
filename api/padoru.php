@@ -37,5 +37,5 @@ $size = imagettfbbox(16, 0, dirname(__FILE__) . "/fonts/trebuchet.ttf", $days);
 imagettftext($image, 16, 0, 272 - ($size[2] - $size[0]) / 2, 270, imagecolorallocate($image, 50, 50, 80), dirname(__FILE__) . "/fonts/trebuchet.ttf", $days);
 $path = "generated/" . uniqid(rand(), true) . '.png';
 imagejpeg($image, $path, 100);
-header("Location: $path");
+header("Location: $path", true, 307);
 die();
