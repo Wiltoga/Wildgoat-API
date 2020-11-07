@@ -106,17 +106,10 @@ if (isset($_GET['url']) and !empty($_GET['url'])) {
                 $table->set_cell(new cell(1, 4, ["0$i:00"], [160, 0, 60], [255, 255, 255]), 0, 1 + ($i - $min_hour) * 4);
             else
                 $table->set_cell(new cell(1, 4, ["$i:00"], [160, 0, 60], [255, 255, 255]), 0, 1 + ($i - $min_hour) * 4);
-        header("Content-type: image/png");
-        imagepng($table->generate_image());
-        $matchs = [];
-        preg_match_all("/('.+')+ : ('.+')+\n?/", "'1' : '2'
-        '3' '4' : '5'", $matchs);
-        if (count($matchs) == 1)
-            foreach ($matchs[0] as $match); //echo "$match\n";
-        else if (count($matchs) > 1) {
-            for ($i = 0; $i < count($matchs[0]); $i++)
-                for ($j = 1; $j < count($matchs); $j++); //echo $matchs[$j][$i] . "<br />";
-        }
+        $path = "generated/" . uniqid(rand(), true) . '.png';
+        imagepng($table->generate_image(), $path);
+        header("Location: $path");
+        die();
     } else
         echo $json->succuess;
 } else {
