@@ -28,8 +28,8 @@ if (isset($_GET['url']) and !empty($_GET['url'])) {
         $monday = strtotime("monday " . ($offset - 1) . " week");
         foreach ($json->weeks[0]->days as $day)
             foreach ($day->events as $event) {
-                $start_event = DateTime::createFromFormat('Ynj\THis', $event->dtstart[0])->getTimestamp();
-                $end_event = DateTime::createFromFormat('Ynj\THis', $event->dtend[0])->getTimestamp();
+                $start_event = DateTime::createFromFormat('Ynj\THis', $event->dtstart)->getTimestamp();
+                $end_event = DateTime::createFromFormat('Ynj\THis', $event->dtend)->getTimestamp();
                 $day = intval($start_event / 3600 / 24) - intval($monday / 3600 / 24) - 1;
                 $curr_start_hour = intval(round($start_event / 3600)) - intval($monday / 3600) - $day * 24;
                 $curr_end_hour = intval(round($end_event / 3600)) - intval($monday / 3600) - $day * 24;
@@ -43,8 +43,8 @@ if (isset($_GET['url']) and !empty($_GET['url'])) {
             foreach ($day->events as $event) {
                 $content = [];
                 $matchs = [];
-                $start_event = DateTime::createFromFormat('Ynj\THis', $event->dtstart[0])->getTimestamp();
-                $end_event = DateTime::createFromFormat('Ynj\THis', $event->dtend[0])->getTimestamp();
+                $start_event = DateTime::createFromFormat('Ynj\THis', $event->dtstart)->getTimestamp();
+                $end_event = DateTime::createFromFormat('Ynj\THis', $event->dtend)->getTimestamp();
 
                 $day = intval($start_event / 3600 / 24) - intval($monday / 3600 / 24) - 1;
                 $start_quarter = intval(round($start_event / 900.)) - intval($monday / 900) - $day * 96;

@@ -1,6 +1,7 @@
 <?php
 
 include_once("utils.php");
+include_once("CalFileParser.php");
 class EDT
 {
     public $weeks = array();
@@ -30,27 +31,53 @@ class Day
     public $events = array();
 }
 
+function date_to_universal($date)
+{
+    $out = substr($date, 0, 4);
+    $out .= substr($date, 5, 2);
+    $out .= substr($date, 8, 2);
+    $out .= 'T';
+    $out .= substr($date, 11, 2);
+    $out .= substr($date, 14, 2);
+    $out .= substr($date, 17, 2);
+    return $out;
+}
 
 function ical_to_json($url, $weeks, $offset)
 {
     $edt = new EDT;
-    $raw = file_get_contents("https://ical-to-json.herokuapp.com/convert.json?url=" . urlencode($url));
+    $cal = new CalFileParser();
+    $cal->set_timezone('Europe/Berlin');
+    $raw = $cal->parse($_GET['url'], 'json');
     if ($raw != false) {
-        $rawevents = json_decode($raw)->vcalendar[0]->vevent;
+        $rawevents = json_decode($raw);
         for ($i = 0; $i < $weeks; $i++) {
             $edt->weeks[] = new Week;
         }
         foreach ($rawevents as $event) {
-            $rawtime = substr($event->dtstart[0], 0, strlen('YYYYmmdd'));
-            $edt->code += hashcode_string($event->dtstart);
-            $edt->code += hashcode_string($event->dtend);
-            $edt->code += hashcode_string($event->summary);
+            $rawtime = substr(date_to_universal($event->DTSTART->date), 0, strlen('YYYYmmdd'));
+            $edt->code += hashcode_string(date_to_universal($event->DTSTART->date));
+            $edt->code += hashcode_string(date_to_universal($event->DTEND->date));
+            $edt->code += hashcode_string($event->SUMMARY);
             for ($i = $offset; $i < $offset + $weeks; $i++) {
                 $j = $i - 1;
                 $currMon = date('Ymd', strtotime("monday $j week"));
                 if ($currMon <= $rawtime &&  $rawtime <= date('Ymd', strtotime("sunday $i week"))) {
                     $day_of_week = $rawtime - $currMon;
-                    $edt->weeks[$i - $offset]->days[$day_of_week]->events[] = $event;
+                    $edt->weeks[$i - $offset]->days[$day_of_week]->events[] = new class ($event)
+                    {
+                        public function __construct($event)
+                        {
+                            $this->dtstart = date_to_universal($event->DTSTART->date);
+                            $this->dtend = date_to_universal($event->DTEND->date);
+                            $this->summary = $event->SUMMARY;
+                            $this->location = $event->LOCATION;
+                        }
+                        public $dtstart;
+                        public $dtend;
+                        public $summary;
+                        public $location;
+                    };
                 }
             }
         }

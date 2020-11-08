@@ -1,6 +1,7 @@
 <?php
 
 include_once("./includes/ical-json.php");
+include_once("./includes/CalFileParser.php");
 
 header('Content-Type: application/json');
 
