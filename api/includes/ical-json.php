@@ -1,9 +1,11 @@
 <?php
 
+include_once("utils.php");
 class EDT
 {
     public $weeks = array();
     public $success = true;
+    public $code = -1;
 }
 
 class Week
@@ -40,6 +42,9 @@ function ical_to_json($url, $weeks, $offset)
         }
         foreach ($rawevents as $event) {
             $rawtime = substr($event->dtstart[0], 0, strlen('YYYYmmdd'));
+            $edt->code += hashcode_string($event->dtstart);
+            $edt->code += hashcode_string($event->dtend);
+            $edt->code += hashcode_string($event->summary);
             for ($i = $offset; $i < $offset + $weeks; $i++) {
                 $j = $i - 1;
                 $currMon = date('Ymd', strtotime("monday $j week"));
