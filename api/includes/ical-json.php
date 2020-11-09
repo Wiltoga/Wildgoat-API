@@ -43,11 +43,11 @@ function date_to_universal($date)
     return $out;
 }
 
-function ical_to_json($url, $weeks, $offset)
+function ical_to_json($url, $weeks, $offset, $timezone)
 {
     $edt = new EDT;
     $cal = new CalFileParser();
-    $cal->set_timezone('Europe/Berlin');
+    $cal->set_timezone($timezone);
     $raw = $cal->parse($_GET['url'], 'json');
     if ($raw != false) {
         $rawevents = json_decode($raw);

@@ -6,11 +6,14 @@ if (isset($_GET['url']) and !empty($_GET['url'])) {
     $url = $_GET['url'];
     $offset = 0;
     $regex = "/.+/";
+    $timezone = 'Europe/Berlin';
     if (isset($_GET['regex']) and !empty($_GET['regex']))
         $regex = $_GET['regex'];
+    if (isset($_GET['timezone']) and !empty($_GET['timezone']))
+        $timezone = intval($_GET['timezone']);
     if (isset($_GET['offset']) and !empty($_GET['offset']))
         $offset = intval($_GET['offset']);
-    $json = json_decode(ical_to_json($url, 1, $offset));
+    $json = json_decode(ical_to_json($url, 1, $offset, $timezone));
     if ($json->success) {
         $day_of_week = 0;
         $table = new table();

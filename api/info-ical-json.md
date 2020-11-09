@@ -11,3 +11,4 @@ Converts an ical into a JSON starting from the current week.
  - `url=` : **Required**, encoded url. Indicates which Ical to target.
  - `weeks=` : Default 2. Number of weeks to get.
  - `offset=` : Default 0. The offset of the week. ex : 1 for next week, -1 for previous week.
+ - `timezone=` : Default `Europe/Berlin`, encoded timezone. Timezone used for the parser.
