@@ -61,7 +61,10 @@ function ical_to_json($url, $weeks, $offset)
             $edt->code += hashcode_string($event->SUMMARY);
             for ($i = $offset; $i < $offset + $weeks; $i++) {
                 $j = $i - 1;
-                $currMon = date('Ymd', strtotime("monday $j week"));
+                $currDay = date('Ymd', strtotime("now"));
+                $currMon = date('Ymd', strtotime("monday $i week"));
+                if ($currDay != $currMon)
+                    $currMon = date('Ymd', strtotime("monday $j week"));
                 if ($currMon <= $rawtime &&  $rawtime <= date('Ymd', strtotime("sunday $i week"))) {
                     $day_of_week = $rawtime - $currMon;
                     $edt->weeks[$i - $offset]->days[$day_of_week]->events[] = new class ($event)
