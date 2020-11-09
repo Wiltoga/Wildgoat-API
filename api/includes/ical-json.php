@@ -54,15 +54,17 @@ function ical_to_json($url, $weeks, $offset)
         for ($i = 0; $i < $weeks; $i++) {
             $edt->weeks[] = new Week;
         }
+        $today_monday = date('Ymd', strtotime("now")) == date('Ymd', strtotime("monday 0 week"));
         foreach ($rawevents as $event) {
             $rawtime = substr(date_to_universal($event->DTSTART->date), 0, strlen('YYYYmmdd'));
             for ($i = $offset; $i < $offset + $weeks; $i++) {
                 $j = $i - 1;
-                $currDay = date('Ymd', strtotime("now"));
-                $currMon = date('Ymd', strtotime("monday $i week"));
-                if ($currDay != $currMon)
-                    $currMon = date('Ymd', strtotime("monday $j week"));
-                if ($currMon <= $rawtime &&  $rawtime <= date('Ymd', strtotime("sunday $i week"))) {
+                if ($today_monday)
+                    $j = $i;
+                else
+                    $j = $i - 1;
+                $currMon = date('Ymd', strtotime("monday $j week"));
+                if ($currMon <= $rawtime && $rawtime <= date('Ymd', strtotime("sunday $i week"))) {
                     $edt->code += hashcode_string(date_to_universal($event->DTSTART->date));
                     $edt->code += hashcode_string(date_to_universal($event->DTEND->date));
                     $edt->code += hashcode_string($event->SUMMARY);

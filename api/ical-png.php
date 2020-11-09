@@ -25,7 +25,10 @@ if (isset($_GET['url']) and !empty($_GET['url'])) {
         $table->set_cell(new cell(1, 1, [], [0, 0, 0], [255, 255, 255]), 0, 0);
         $min_hour = 24;
         $max_hour = 0;
-        $monday = strtotime("monday " . ($offset - 1) . " week");
+        if (date('Ymd', strtotime("now")) == date('Ymd', strtotime("monday 0 week")))
+            $monday = strtotime("monday $offset week");
+        else
+            $monday = strtotime("monday " . ($offset - 1) . " week");
         foreach ($json->weeks[0]->days as $day)
             foreach ($day->events as $event) {
                 $start_event = DateTime::createFromFormat('Ynj\THis', $event->dtstart)->getTimestamp();
@@ -111,7 +114,7 @@ if (isset($_GET['url']) and !empty($_GET['url'])) {
         header("Location: $path", true, 307);
         die();
     } else
-        echo $json->succuess;
+        echo $json->success;
 } else {
     echo 'no url provided';
 }
