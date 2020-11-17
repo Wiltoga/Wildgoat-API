@@ -23,7 +23,7 @@ if (isset($_GET['url']) and !empty($_GET['url'])) {
         $table->background_color = [200, 200, 200];
         $table->display_columns = true;
         $table->display_rows = false;
-        $table->min_cell_size = [5, 5];
+        $table->min_cell_size = [15, 15];
         $table->cell_padding = 5;
         $table->set_cell(new cell(1, 1, [], [0, 0, 0], [255, 255, 255]), 0, 0);
         $min_hour = 24;

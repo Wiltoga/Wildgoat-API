@@ -235,6 +235,7 @@ class table
             $nb_lines = count($cell->content_lines);
             $max_width = 0;
             $text_width[$column * 4096 + $row] = [];
+            //cell width calc
             foreach ($cell->content_lines as $line) {
                 $pts = imagettfbbox($this->font_size, 0, $this->font_family_file, $line);
                 $width = ceil($pts[2] - $pts[0]);
@@ -242,47 +243,41 @@ class table
                 if ($max_width < $width)
                     $max_width = $width;
             }
-            if (isset($col_width[$column])) {
-                if ($col_width[$column] < $max_width + 2 * $this->cell_padding)
-                    $col_width[$column] = $max_width + 2 * $this->cell_padding;
-            } else
-                $col_width[$column] = $max_width + 2 * $this->cell_padding;
-            if ($cell->col_span > 1)
-                if (!isset($col_width[$column + $cell->col_span - 1])) {
-                    $col_width[$column + $cell->col_span - 1] = max(2 * $this->cell_padding, $this->min_cell_size[0]);
-                    $text_height[($column + $cell->col_span - 1) * 4096 + $row] = 0;
-                }
-            if ($cell->row_span > 1)
-                if (!isset($row_height[$row + $cell->row_span - 1])) {
-                    $row_height[$row + $cell->row_span - 1] = max(2 * $this->cell_padding, $this->min_cell_size[1]);
-                    $text_height[$column * 4096 + $row + $cell->row_span - 1] = 0;
-                }
-            if (isset($row_height[$row])) {
-                if ($nb_lines > 0) {
-                    $t_height = ceil($this->font_size + ($nb_lines - 1) * $this->font_size * 1.3);
-                    if (!isset($text_height[$column * 4096 + $row]))
-                        $text_height[$column * 4096 + $row] = 0;
-                    if ($text_height[$column * 4096 + $row] < $t_height)
-                        $text_height[$column * 4096 + $row] = $t_height;
-                    $r_height = ceil($this->font_size + ($nb_lines - 1) * $this->font_size * 1.3 + 2 * $this->cell_padding);
-                    if ($row_height[$row] < $r_height)
-                        $row_height[$row] = $r_height;
-                } else {
-                    $row_height[$row] = 2 * $this->cell_padding;
-                    $text_height[$column * 4096 + $row] = 0;
-                }
-            } else {
-                if ($nb_lines > 0) {
-                    $text_height[$column * 4096 + $row] = ceil($this->font_size + ($nb_lines - 1) * $this->font_size * 1.3);
-                    $row_height[$row] = ceil($this->font_size + ($nb_lines - 1) * $this->font_size * 1.3 + 2 * $this->cell_padding);
-                } else {
-                    $row_height[$row] = 2 * $this->cell_padding;
-                    $text_height[$column * 4096 + $row] = 0;
-                }
+            $max_width /= $cell->col_span;
+            //cell width
+            for ($i = $column; $i < $column + $cell->col_span; $i++) {
+                if (isset($col_width[$i])) {
+                    if ($col_width[$i] < $max_width + 2 * $this->cell_padding)
+                        $col_width[$i] = $max_width + 2 * $this->cell_padding;
+                } else
+                    $col_width[$i] = $max_width + 2 * $this->cell_padding;
+                if ($col_width[$i] < $this->min_cell_size[0])
+                    $col_width[$i] = $this->min_cell_size[0];
             }
-            if ($row_height[$row] < $this->min_cell_size[1])
-                $row_height[$row] = $this->min_cell_size[1];
+            //cell height calc
+            $r_height = $nb_lines > 0 ? ceil($this->font_size + ($nb_lines - 1) * $this->font_size * 1.3 + 2 * $this->cell_padding) / $cell->row_span : 2 * $this->cell_padding;
+            if ($r_height < $this->min_cell_size[1])
+                $r_height = $this->min_cell_size[1];
+            //text height
+            if ($nb_lines > 0) {
+                $t_height = ceil($this->font_size + ($nb_lines - 1) * $this->font_size * 1.3);
+                if (!isset($text_height[$column * 4096 + $row]))
+                    $text_height[$column * 4096 + $row] = 0;
+                if ($text_height[$column * 4096 + $row] < $t_height)
+                    $text_height[$column * 4096 + $row] = $t_height;
+            } else {
+                $text_height[$column * 4096 + $row] = 0;
+            }
+            //cell height
+            for ($i = $row; $i < $row + $cell->row_span; $i++) {
+                if (isset($row_height[$i])) {
+                    if ($row_height[$i] < $r_height)
+                        $row_height[$i] = $r_height;
+                } else
+                    $row_height[$i] = $r_height;
+            }
         }
+        //filling the missing cells
         for ($i = 0; $i < $last_column; $i++)
             if (!isset($col_width[$i]))
                 $col_width[$i] = $this->min_cell_size[0];
