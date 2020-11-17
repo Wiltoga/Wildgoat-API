@@ -4,7 +4,7 @@ function hashcode_string($string)
 {
     $value = 0;
     for ($i = 0; $i < strlen($string); $i++)
-        $value += (ord($string[$i]) * 150);
+        $value += (ord($string[$i]) * 20*($i+1));
 
     return $value;
 }
